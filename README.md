@@ -19,10 +19,7 @@ PHP代码审计技术用的最多也是目前的主力方法：静态分析，�
 
 ### PHP版本与应用代码审计
 到目前为止，PHP主要有3个版本：php4、php5、php6，使用比例大致如下：
-
-| :-------- | :--------|
-| PCH-024   | [Type Confusion Infoleak Vulnerabilities in SoapClient](https://github.com/80vul/phpcodz/blob/master/research/pch-024.md) |
-
+| 版本 | 比例 | 说明 |
 | :-------- | :--------|:--------|
 | php4 | 68% | 2000-2007，No security fixes after 2008/08，最终版本是php4.4.9 |
 | php5 | 32% | 2004-present，Now at version 5.2.6（PHP 5.3 alpha1 released!） |
