@@ -60,7 +60,7 @@ key.php?<script>alert(1);</script>=1&bbb=2
 那么就导致一个xss的漏洞，扩展一下如果这个key提交给include()等函数或者sql查询呢？：） 
 
 |  *漏洞审计策略* |
-| ------------- |
+| :-------- |
 | PHP版本要求 : 无 |
 | 系统要求 : 无 |
 | 审计策略 : 通读代码 |
@@ -96,7 +96,7 @@ if($_POST && $charset != 'utf-8') {
 ```
 
 | *漏洞审计策略* |
-| ------------- |
+| :-------- |
 | PHP版本要求：无 |
 | 系统要求：无 |
 | 审计策略：通读代码 |
@@ -122,13 +122,13 @@ print $var1;
 上面的代码通过提交$var来实现对$var1的覆盖。
 
 | *漏洞审计策略（parse_str）* |
-| ------------- |
+| :-------- |
 | PHP版本要求：无 | 
 | 系统要求：无 | 
 | 审计策略：查找字符parse_str |
 
 | *漏洞审计策略（mb_parse_str）* |
-| ------------- |
+| :-------- |
 | PHP版本要求：php4<4.4.7 php5<5.2.2 |
 | 系统要求：无 | 
 | 审计策略：查找字符mb_parse_str |
@@ -145,7 +145,7 @@ echo 'Hello admin!';
 ```
 
 | *漏洞审计策略（import_request_variables）* |
-| ------------- |
+| :-------- |
 | PHP版本要求：php4<4.4.1 php5<5.2.2 |
 | 系统要求：无 |
 | 审计策略：查找字符import_request_variables |
@@ -172,7 +172,7 @@ print $_GET[b];
 如果熟悉WEB2.0的攻击的同学，很容易想到上面的代码我们可以利用这个特性进行crsf攻击。
 
 | *漏洞审计策略* |
-| ------------- |
+| :-------- |
 | PHP版本要求：无 |
 | 系统要求：无 |
 | 审计策略：通读代码 |
@@ -189,7 +189,7 @@ print $_GET[b];
 PHP5的$`_`SERVER变量缺少magic_quotes_gpc的保护，导致近年来X-Forwarded-For的漏洞猛暴，所以很多程序员考虑过滤X-Forwarded-For，但是其他的变量呢？
 
 | *漏洞审计策略（$`_`SERVER变量）* |
-| ------------- |
+| :-------- |
 | PHP版本要求：无 |
 | 系统要求：无 |
 | 审计策略：查找字符`_`SERVER |
@@ -197,7 +197,7 @@ PHP5的$`_`SERVER变量缺少magic_quotes_gpc的保护，导致近年来X-Forwar
 *2) getenv()得到的变量（使用类似$`_`SERVER变量）*
 
 | *漏洞审计策略（getenv()）* |
-| ------------- |
+| :-------- |
 | PHP版本要求：无 |
 | 系统要求：无 |
 | 审计策略：查找字符getenv |
@@ -215,7 +215,7 @@ if ( isset($HTTP_RAW_POST_DATA) )
 ```
 	        
 | *漏洞审计策略（数据流）* |
-| ------------- |
+| :-------- |
 | PHP版本要求：无 |
 | 系统要求：无 |
 | 审计策略：查找字符HTTP_RAW_POST_DATA或者php://input |
@@ -239,7 +239,7 @@ $query = $db->query("SELECT m.username, mf.ignorepm FROM {$tablepre}members m
 ```
 
 | *漏洞审计策略* |
-| ------------- |
+| :-------- |
 | PHP版本要求：无 |
 | 系统要求：无 |
 | 审计策略：查找数据库操作字符（select,update,insert等等） |
@@ -254,15 +254,15 @@ $query = $db->query("SELECT m.username, mf.ignorepm FROM {$tablepre}members m
 *1) stripslashes() 这个其实就是一个decode-addslashes()*
 
 *2) 其他字符串转换函数：*
-| 版本      |    说明 |
-| :-------- | :--------|
+
+| 版本 | 说明 |
+| :-------- | :-------- |
 | base64_decode | 对使用 MIME base64 编码的数据进行解码 |
 | base64_encode | 使用 MIME base64 对数据进行编码 |
 | rawurldecode | 对已编码的 URL 字符串进行解码 |
 | rawurlencode | 按照 RFC 1738 对 URL 进行编码 |
 | urldecode | 解码已编码的 URL 字符串 |
 | urlencode | 编码 URL 字符串 |
-| ... | ... |
 
 _另外一个 unserialize/serialize_
 
