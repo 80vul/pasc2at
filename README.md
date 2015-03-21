@@ -224,7 +224,7 @@ if ( isset($HTTP_RAW_POST_DATA) )
 
 如Discuz!<5.0的pm.php：
      
-```
+``` php
 if(is_array($msgtobuddys)) {
 	$msgto = array_merge($msgtobuddys, array($msgtoid));
 		......
@@ -254,8 +254,8 @@ $query = $db->query("SELECT m.username, mf.ignorepm FROM {$tablepre}members m
 *1) stripslashes() 这个其实就是一个decode-addslashes()*
 
 *2) 其他字符串转换函数：*
-| 函数 | 说明 |
-| ------------- | ------------- |
+| 版本      |    说明 |
+| :-------- | :--------|
 | base64_decode | 对使用 MIME base64 编码的数据进行解码 |
 | base64_encode | 使用 MIME base64 对数据进行编码 |
 | rawurldecode | 对已编码的 URL 字符串进行解码 |
@@ -270,17 +270,18 @@ _另外一个 unserialize/serialize_
 
 目前很多漏洞挖掘者开始注意这一类型的漏洞了，如典型的urldecode：
 
-```
+``` php
 $sql = "SELECT * FROM article WHERE articleid='".urldecode($_GET[id])."'";
 ```
 
 当magic_quotes_gpc=on时，我们提交?id=%2527，得到sql语句为：
 
-```
+``` php
 SELECT * FROM article WHERE articleid='''
 ```
 
 | *漏洞审计策略* |
+| :-------- |
 | PHP版本要求：无 |
 | 系统要求：无 |
 | 审计策略：查找对应的编码函数 |
@@ -299,11 +300,12 @@ _详细见附录`[`1`]`_
 从这里我们可以思考得到一个结论：一切进入函数的变量都是有害的，另外利用二次攻击我们可以实现一个webrootkit，把我们的恶意构造直接放到数据库里。我们应当把这样的代码看成一个vul？
 
 | *漏洞审计策略* |
+| :-------- |
 | PHP版本要求：无 |
 | 系统要求：无 |
 | 审计策略：通读代码 |
 
-==== 魔术引号带来的新的安全问题 ====
+### 魔术引号带来的新的安全问题
 
 首先我们看下魔术引号的处理机制：
 
@@ -315,7 +317,7 @@ _详细见附录`[`1`]`_
 
 *1)得到原字符（',\,",null]）*
 
-```
+``` php
 $order_sn=substr($_GET['order_sn'], 1);
 
 //提交                 '
@@ -330,7 +332,7 @@ $sql = "SELECT order_id, order_status, shipping_status, pay_status, ".
 
 *2)得到“\”字符*
 
-```
+``` php
 $order_sn=substr($_GET['order_sn'], 0,1);
 
 //提交                 '
@@ -351,13 +353,14 @@ $sql = "SELECT order_id, order_status, shipping_status, pay_status, ".
 
 执行的SQL语句为：
 
-```
+``` sql
 SELECT order_id, order_status, shipping_status, pay_status, shipping_time, 
 shipping_id, invoice_no, user_id FROM order_info WHERE order_sn = '\' and 
 order_tn=' and 1=1/*'
 ```
 
 | *漏洞审计策略* |
+| :-------- |
 | PHP版本要求：无 |
 | 系统要求：无 |
 | 审计策略：查找字符串处理函数如substr或者通读代码 |
