@@ -152,11 +152,11 @@ echo 'Hello admin!';
 
 ### PHP5 Globals
 从严格意义上来说这个不可以算是PHP的漏洞，只能算是一个特性，测试代码：
-``` php
-<?
-//register_globals =ON
+```
+<?php
+//register_globals = 'ON'
 //foo.php?GLOBALS[foobar]=HELLO
-php echo $foobar; 
+echo $foobar; 
 ?>
 ```
 但是很多的程序没有考虑到这点，请看如下代码：
@@ -172,33 +172,41 @@ print $_GET[b];
 如果熟悉WEB2.0的攻击的同学，很容易想到上面的代码我们可以利用这个特性进行crsf攻击。
 
 | *漏洞审计策略* |
-| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 |
+| ------------- |
+| PHP版本要求：无 |
+| 系统要求：无 |
+| 审计策略：通读代码 |
 
-=== magic_quotes_gpc与代码安全 ===
- 
-==== 什么是magic_quotes_gpc ====
- 
+### magic_quotes_gpc与代码安全
+---------
+### 什么是magic_quotes_gpc
 当打开时，所有的 '（单引号），"（双引号），\（反斜线）和 NULL 字符都会被自动加上一个反斜线进行转义。还有很多函数有类似的作用 如：addslashes()、mysql_escape_string()、mysql_real_escape_string()等，另外还有parse_str()后的变量也受magic_quotes_gpc的影响。目前大多数的主机都打开了这个选项，并且很多程序员也注意使用上面那些函数去过滤变量，这看上去很安全。很多漏洞查找者或者工具遇到些函数过滤后的变量直接就放弃，但是就在他们放弃的同时也放过很多致命的安全漏洞。 ：）
 
-==== 哪些地方没有魔术引号的保护 ====
+### 哪些地方没有魔术引号的保护
     
 *1) $`_`SERVER变量*
 
 PHP5的$`_`SERVER变量缺少magic_quotes_gpc的保护，导致近年来X-Forwarded-For的漏洞猛暴，所以很多程序员考虑过滤X-Forwarded-For，但是其他的变量呢？
 
 | *漏洞审计策略（$`_`SERVER变量）* |
-| PHP版本要求：无<br>系统要求：无<br>审计策略：查找字符`_`SERVER |
+| ------------- |
+| PHP版本要求：无 |
+| 系统要求：无 |
+| 审计策略：查找字符`_`SERVER |
 
 *2) getenv()得到的变量（使用类似$`_`SERVER变量）*
 
 | *漏洞审计策略（getenv()）* |
-| PHP版本要求：无<br>系统要求：无<br>审计策略：查找字符getenv |
+| ------------- |
+| PHP版本要求：无 |
+| 系统要求：无 |
+| 审计策略：查找字符getenv |
 
 *3) $HTTP_RAW_POST_DATA与PHP输入、输出流*
 
 主要应用与soap/xmlrpc/webpublish功能里，请看如下代码：
 
-```
+``` php
 if ( !isset( $HTTP_RAW_POST_DATA ) ) {
 	$HTTP_RAW_POST_DATA = file_get_contents( 'php://input' );
 }
@@ -207,7 +215,10 @@ if ( isset($HTTP_RAW_POST_DATA) )
 ```
 	        
 | *漏洞审计策略（数据流）* |
-| PHP版本要求：无<br>系统要求：无<br>审计策略：查找字符HTTP_RAW_POST_DATA或者php://input |
+| ------------- |
+| PHP版本要求：无 |
+| 系统要求：无 |
+| 审计策略：查找字符HTTP_RAW_POST_DATA或者php://input |
 
 *4) 数据库操作容易忘记'的地方如：in()/limit/order by/group by*
 
@@ -228,10 +239,13 @@ $query = $db->query("SELECT m.username, mf.ignorepm FROM {$tablepre}members m
 ```
 
 | *漏洞审计策略* |
-| PHP版本要求：无<br>系统要求：无<br>审计策略：查找数据库操作字符（select,update,insert等等） |
+| ------------- |
+| PHP版本要求：无 |
+| 系统要求：无 |
+| 审计策略：查找数据库操作字符（select,update,insert等等） |
 
 
-==== 变量的编码与解码 ====
+### 变量的编码与解码
 
 一个WEB程序很多功能的实现都需要变量的编码解码，而且就在这一转一解的传递过程中就悄悄的绕过你的过滤的安全防线。
 
@@ -240,7 +254,8 @@ $query = $db->query("SELECT m.username, mf.ignorepm FROM {$tablepre}members m
 *1) stripslashes() 这个其实就是一个decode-addslashes()*
 
 *2) 其他字符串转换函数：*
-
+| 函数 | 说明 |
+| ------------- | ------------- |
 | base64_decode | 对使用 MIME base64 编码的数据进行解码 |
 | base64_encode | 使用 MIME base64 对数据进行编码 |
 | rawurldecode | 对已编码的 URL 字符串进行解码 |
@@ -266,7 +281,9 @@ SELECT * FROM article WHERE articleid='''
 ```
 
 | *漏洞审计策略* |
-| PHP版本要求：无<br>系统要求：无<br>审计策略：查找对应的编码函数 |
+| PHP版本要求：无 |
+| 系统要求：无 |
+| 审计策略：查找对应的编码函数 |
 
 ==== 二次攻击 ====
 
@@ -282,7 +299,9 @@ _详细见附录`[`1`]`_
 从这里我们可以思考得到一个结论：一切进入函数的变量都是有害的，另外利用二次攻击我们可以实现一个webrootkit，把我们的恶意构造直接放到数据库里。我们应当把这样的代码看成一个vul？
 
 | *漏洞审计策略* |
-| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 |
+| PHP版本要求：无 |
+| 系统要求：无 |
+| 审计策略：通读代码 |
 
 ==== 魔术引号带来的新的安全问题 ====
 
@@ -339,7 +358,9 @@ order_tn=' and 1=1/*'
 ```
 
 | *漏洞审计策略* |
-| PHP版本要求：无<br>系统要求：无<br>审计策略：查找字符串处理函数如substr或者通读代码 |
+| PHP版本要求：无 |
+| 系统要求：无 |
+| 审计策略：查找字符串处理函数如substr或者通读代码 |
 
 ==== 变量key与魔术引号 ====
 
@@ -381,7 +402,9 @@ Array ( [aaaa'aaa] => Array ( [bb\'] => 1 ) )
 数组第一维变量的key不受魔术引号的影响。
 
 | *漏洞审计策略* |
-| PHP版本要求：php4和php<5.2.1<br>系统要求：无<br>审计策略：通读代码 |
+| PHP版本要求：php4和php<5.2.1 |
+| 系统要求：无 |
+| 审计策略：通读代码 |
 
 
 *2)当magic_quotes_gpc = Off时，在php5.24下测试显示：*
@@ -425,7 +448,9 @@ aaa'aa
 ```
 
 | *漏洞审计策略* |
-| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 |
+| PHP版本要求：无 |
+| 系统要求：无 |
+| 审计策略：通读代码 |
 
 === 代码注射 ===
 
@@ -454,7 +479,9 @@ usort($databases, create_function('$a, $b', $sort_function));
 ```
 
 | *漏洞审计策略* |
-| PHP版本要求：无<br>系统要求：无<br>审计策略：查找对应函数（assert,call_user_func,call_user_func_array,create_function等） |
+| PHP版本要求：无 |
+| 系统要求：无 |
+| 审计策略：查找对应函数（assert,call_user_func,call_user_func_array,create_function等） |
 
 ==== 变量函数与双引号 ====
      
@@ -481,7 +508,9 @@ $text = preg_replace(
 另外很多的应用程序都把变量用""存放在缓存文件或者config或者data文件里，这样很容易被人注射变量函数。
    
 | *漏洞审计策略* |
-| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 |
+| PHP版本要求：无 |
+| 系统要求：无 |
+| 审计策略：通读代码 |
 
 === PHP自身函数漏洞及缺陷 ===
      
@@ -496,7 +525,9 @@ unserialize(stripslashes($HTTP_COOKIE_VARS[$cookiename . '_data']);
 在以往的PHP版本里，很多函数都曾经出现过溢出漏洞，所以我们在审计应用程序漏洞的时候不要忘记了测试目标使用的PHP版本信息。
 
 | *漏洞审计策略* |
-| PHP版本要求：对应fix的版本<br>系统要求：<br>审计策略：查找对应函数名 |
+| PHP版本要求：对应fix的版本 |
+| 系统要求： |
+| 审计策略：查找对应函数名 |
 
 ==== PHP函数的其他漏洞 ====
 
@@ -517,7 +548,9 @@ $query = $db->query("SELECT DISTINCT t.tid FROM $sqltable WHERE $sqlwhere $order
 ```
     
 | *漏洞审计策略* |
-| PHP版本要求：php4<4.3 php5<5.14<br>系统要求：无<br>审计策略：查找unset |
+| PHP版本要求：php4<4.3 php5<5.14 |
+| 系统要求：无 |
+| 审计策略：查找unset |
 
 ==== session_destroy()删除文件漏洞 ====
 
@@ -544,7 +577,9 @@ if($_GET['del']) {
 当我们提交构造cookie:PHPSESSID=/../1.php，相当于unlink('sess`_`/../1.php')这样就通过注射../转跳目录删除任意文件了。很多著名的程序某些版本都受影响如phpmyadmin，sablog，phpwind3等等。
 
 | *漏洞审计策略* |
-| PHP版本要求：具体不详<br>系统要求：无<br>审计策略：查找session_destroy |
+| PHP版本要求：具体不详 |
+| 系统要求：无 |
+| 审计策略：查找session_destroy |
 
 ==== 随机函数 ====
    
@@ -565,8 +600,10 @@ print getrandmax();// 32767
 $a= md5(rand());
 for($i=0;$i<=32767;$i++){
   if(md5($i) ==$a ) {
-   print $i."-->ok!!<br>";exit;
-   }else { print $i."<br>";}
+   print $i."-->ok!! |
+| ";exit;
+   }else { print $i." |
+| ";}
 }
 ?>
 ```
@@ -574,7 +611,9 @@ for($i=0;$i<=32767;$i++){
 当我们的程序使用rand处理session时，攻击者很容易暴力破解出你的session，但是对于mt_rand是很难单纯的暴力的。
 
 | *漏洞审计策略* |
-| PHP版本要求：无<br>系统要求：无<br>审计策略：查找rand |
+| PHP版本要求：无 |
+| 系统要求：无 |
+| 审计策略：查找rand |
 
 *2) mt_srand()/srand()-weak seeding（by Stefan Esser）*
 
@@ -652,10 +691,14 @@ return false;
 从上面的代码实现了对seed的破解，另外根据Stefan Esser的分析seed还根据进程变化而变化，换句话来说同一个进程里的seed是相同的。 然后同一个seed每次mt_rand的值都是特定的。如下图：
 
 | *seed-A* |
-| mt_rand-A-1<br>mt_rand-A-2<br>mt_rand-A-3 |
+| mt_rand-A-1 |
+| mt_rand-A-2 |
+| mt_rand-A-3 |
 
 | *seed-B* |
-| mt_rand-B-1<br>mt_rand-B-2<br>mt_rand-B-3 |
+| mt_rand-B-1 |
+| mt_rand-B-2 |
+| mt_rand-B-3 |
 
 对于seed-A里mt_rand-1/2/3都是不相等的，但是值都是特定的，也就是说当seed-A等于seed-B，那么mt_rand-A-1就等于mt_rand-B-1…，这样我们只要能够得到seed就可以得到每次mt_rand的值了。
 
@@ -665,7 +708,8 @@ return false;
 
 第二种：5.2.6>php>4.2.0默认播种的算法也不是很强悍，这是Stefan Esser的文章里的描述：
 
-    The Implementation<br>When mt_rand() is seeded internally or by a call to mt_srand() PHP 4 and PHP 5 <= 5.2.0 force the lowest bit to 1. Therefore the strength of the seed is only 31 and not 32 bits. In PHP 5.2.1 and above the implementation of the Mersenne Twister was changed and the forced bit removed.
+    The Implementation |
+| When mt_rand() is seeded internally or by a call to mt_srand() PHP 4 and PHP 5 <= 5.2.0 force the lowest bit to 1. Therefore the strength of the seed is only 31 and not 32 bits. In PHP 5.2.1 and above the implementation of the Mersenne Twister was changed and the forced bit removed.
 
 在32位系统上默认的播种的种子为最大值是`2^32`，这样我们循环最多`2^32`次就可以破解seed。而在PHP 4和PHP 5 <= 5.2.0 的算法有个bug：奇数和偶数的播种是一样的（详见附录[3]）,测试代码如下：
 
@@ -765,7 +809,9 @@ echo mt_rand();
 很多著名的程序都产生了类似的漏洞如wordpress、phpbb、punbb等等。（在后面我们将实际分析下国内著名的bbs程序Discuz!的mt_srand导致的漏洞）
 
 | *漏洞审计策略* |
-| PHP版本要求：php4 php5<5.2.6<br>系统要求：无<br>审计策略：查找mt_srand/mt_rand |
+| PHP版本要求：php4 php5<5.2.6 |
+| 系统要求：无 |
+| 审计策略：查找mt_srand/mt_rand |
 
 
 === 特殊字符 ===
@@ -865,7 +911,9 @@ if(@mysql_fetch_array($result, MYSQL_NUM)) {
 ```
 
 | *漏洞审计策略* |
-| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 |
+| PHP版本要求：无 |
+| 系统要求：无 |
+| 审计策略：通读代码 |
 
 ===== 文件操作里的特殊字符 =====
     
@@ -907,7 +955,9 @@ for($i=0;$i<255;$i++) {
 我们在windows系统运行上面的代码得到如下字符`*` < > ? P p都可以打开目录下的1.php。
 
 | *漏洞审计策略* |
-| PHP版本要求：无<br>系统要求：无<br>审计策略：文读取件操作函数 |
+| PHP版本要求：无 |
+| 系统要求：无 |
+| 审计策略：文读取件操作函数 |
 
 
 == 怎么进一步寻找新的字典 ==
@@ -924,8 +974,11 @@ for($i=0;$i<255;$i++) {
 
 == DEMO ==
 
-| *DEMO -- Discuz! Reset User Password 0day Vulnerability 分析<br>（Exp:[http://www.80vul.com/dzvul/sodb/14/sodb-2008-14.txt]）* |
-| PHP版本要求:php4 php5<5.2.6<br>系统要求: 无<br>审计策略:查找mt_srand/mt_rand |
+| *DEMO -- Discuz! Reset User Password 0day Vulnerability 分析 |
+| （Exp:[http://www.80vul.com/dzvul/sodb/14/sodb-2008-14.txt]）* |
+| PHP版本要求:php4 php5<5.2.6 |
+| 系统要求: 无 |
+| 审计策略:查找mt_srand/mt_rand |
 
 第一步 安装Discuz! 6.1后利用grep查找mt_srand得到：
 
@@ -982,4 +1035,6 @@ heige@heige-desktop:~/dz6/upload$ grep -in 'mt_srand' -r ./ --colour -5
 
 == 附录 ==
 
-`[`1`]` [http://bbs.phpchina.com/attachment.php?aid=22294]<br>`[`2`]` [http://www.php-security.org/]<br>`[`3`]` [http://bugs.php.net/bug.php?id=40114]
+`[`1`]` [http://bbs.phpchina.com/attachment.php?aid=22294] |
+| `[`2`]` [http://www.php-security.org/] |
+| `[`3`]` [http://bugs.php.net/bug.php?id=40114]
