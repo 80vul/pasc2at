@@ -36,7 +36,7 @@ PHP代码审计技术用的最多也是目前的主力方法：静态分析，�
 ### 扩展我们的字典
 下面将详细介绍一些非传统PHP应用代码审计一些漏洞类型和利用技巧。
 
-#### 变量本身的key
+### 变量本身的key
 ---------
 说到变量的提交很多人只是看到了GET/POST/COOKIE等提交的变量的值，但是忘记了有的程序把变量本身的key也当变量提取给函数处理。
 
@@ -65,11 +65,11 @@ key.php?<script>alert(1);</script>=1&bbb=2
 | 系统要求 : 无 |
 | 审计策略 : 通读代码 |
 
-#### 变量覆盖
+### 变量覆盖
 ---------
 很多的漏洞查找者都知道extract()这个函数在指定参数为EXTR_OVERWRITE或者没有指定函数可以导致变量覆盖，但是还有很多其他情况导致变量覆盖的如：
 
-##### 遍历初始化变量
+### 遍历初始化变量
 请看如下代码：
 
 ``` php
@@ -101,7 +101,7 @@ if($_POST && $charset != 'utf-8') {
 | 系统要求：无 |
 | 审计策略：通读代码 |
 
-##### parse_str()变量覆盖漏洞
+### parse_str()变量覆盖漏洞
 
 ``` php
 //var.php?var=new
@@ -134,7 +134,7 @@ print $var1;
 | 审计策略：查找字符mb_parse_str |
 
 
-##### import_request_variables()变量覆盖漏洞
+### import_request_variables()变量覆盖漏洞
 
 ``` php
 //var.php?_SERVER[REMOTE_ADDR]=10.1.1.1
@@ -150,7 +150,7 @@ echo 'Hello admin!';
 | 系统要求：无 |
 | 审计策略：查找字符import_request_variables |
 
-##### PHP5 Globals
+### PHP5 Globals
 从严格意义上来说这个不可以算是PHP的漏洞，只能算是一个特性，测试代码：
 ``` php
 <?
