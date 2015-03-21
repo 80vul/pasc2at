@@ -96,7 +96,10 @@ if($_POST && $charset != 'utf-8') {
 ```
 
 | *漏洞审计策略* |
-| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 |
+| ------------- |
+| PHP版本要求：无 |
+| 系统要求：无 |
+| 审计策略：通读代码 |
 
 ##### parse_str()变量覆盖漏洞
 
@@ -119,10 +122,16 @@ print $var1;
 上面的代码通过提交$var来实现对$var1的覆盖。
 
 | *漏洞审计策略（parse_str）* |
-| PHP版本要求：无<br>系统要求：无<br>审计策略：查找字符parse_str |
+| ------------- |
+| PHP版本要求：无 | 
+| 系统要求：无 | 
+| 审计策略：查找字符parse_str |
 
 | *漏洞审计策略（mb_parse_str）* |
-| PHP版本要求：php4<4.4.7 php5<5.2.2<br>系统要求：无<br>审计策略：查找字符mb_parse_str |
+| ------------- |
+| PHP版本要求：php4<4.4.7 php5<5.2.2 |
+| 系统要求：无 | 
+| 审计策略：查找字符mb_parse_str |
 
 
 ##### import_request_variables()变量覆盖漏洞
@@ -136,23 +145,23 @@ echo 'Hello admin!';
 ```
 
 | *漏洞审计策略（import_request_variables）* |
-| PHP版本要求：php4<4.4.1 php5<5.2.2<br>系统要求：无<br>审计策略：查找字符import_request_variables |
+| ------------- |
+| PHP版本要求：php4<4.4.1 php5<5.2.2 |
+| 系统要求：无 |
+| 审计策略：查找字符import_request_variables |
 
-==== PHP5 Globals ====
-
+##### PHP5 Globals
 从严格意义上来说这个不可以算是PHP的漏洞，只能算是一个特性，测试代码：
-
-```
+``` php
 <?
-// register_globals =ON
+//register_globals =ON
 //foo.php?GLOBALS[foobar]=HELLO
 php echo $foobar; 
 ?>
 ```
-
 但是很多的程序没有考虑到这点，请看如下代码：
 
-```
+``` php
 //为了安全取消全局变量
 //var.php?GLOBALS[a]=aaaa&b=111
 if (ini_get('register_globals')) foreach($_REQUEST as $k=>$v) unset(${$k});
