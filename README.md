@@ -1,7 +1,7 @@
 ## 高级PHP应用程序漏洞审核技术
 Summary Php Application Source Code Audits Advanced Technology - Simplified Chinese
 
-### 1.前言
+### 前言
 PHP是一种被广泛使用的脚本语言，尤其适合于web开发。具有跨平台，容易学习，功能强大等特点，据统计全世界有超过34%的网站有php的应用，包括Yahoo、sina、163、sohu等大型门户网站。而且很多具名的web应用系统（包括bbs,blog,wiki,cms等等）都是使用php开发的，Discuz、phpwind、phpbb、vbb、wordpress、boblog等等。
 
 随着web安全的热点升级，php应用程序的代码安全问题也逐步兴盛起来，越来越多的安全人员投入到这个领域，越来越多的应用程序代码漏洞被披露。针对这样一个状况，很多应用程序的官方都成立了安全部门，或者雇佣安全人员进行代码审计，因此出现了很多自动化商业化的代码审计工具。
@@ -10,14 +10,14 @@ PHP是一种被广泛使用的脚本语言，尤其适合于web开发。具有�
 
 另外在这里特别说明一下本文里面很多漏洞都是来源于网络上牛人和朋友们的分享，在这里需要感谢他们 ：）
 
-### 2.传统的代码审计技术
+### 传统的代码审计技术
 WEB应用程序漏洞查找基本上是围绕两个元素展开：变量与函数。也就是说一漏洞的利用必须把你提交的恶意代码通过变量经过n次变量转换传递，最终传递给目标函数执行，还记得MS那句经典的名言吗？“一切输入都是有害的”。这句话只强调了变量输入，很多程序员把“输入”理解为只是gpc`[`$`_`GET,$`_`POST,$`_`COOKIE`]`，但是变量在传递过程产生了n多的变化。导致很多过滤只是个“纸老虎”！我们换句话来描叙下代码安全：“一切进入函数的变量是有害的”。
 
 PHP代码审计技术用的最多也是目前的主力方法：静态分析，主要也是通过查找容易导致安全漏洞的危险函数，常用的如grep，findstr等搜索工具，很多自动化工具也是使用正则来搜索这些函数。下面列举一些常用的函数，也就是下文说的字典（暂略）。但是目前基本已有的字典很难找到漏洞，所以我们需要扩展我们的字典，这些字典也是本文主要探讨的。
 
 其他的方法有：通过修改PHP源代码来分析变量流程，或者hook危险的函数来实现对应用程序代码的审核，但是这些也依靠了我们上面提到的字典。
 
-### 3.PHP版本与应用代码审计
+### PHP版本与应用代码审计
 到目前为止，PHP主要有3个版本：php4、php5、php6，使用比例大致如下：
 | :-------- | :--------|:--------|
 | php4 | 68% | 2000-2007，No security fixes after 2008/08，最终版本是php4.4.9 |
@@ -26,15 +26,15 @@ PHP代码审计技术用的最多也是目前的主力方法：静态分析，�
 
 由于php缺少自动升级的机制，导致目前PHP版本并存，也导致很多存在漏洞没有被修补。这些有漏洞的函数也是我们进行WEB应用程序代码审计的重点对象，也是我们字典重要来源。
 
-### 4.其他的因素与应用代码审计
+### 其他的因素与应用代码审计
 很多代码审计者拿到代码就看，他们忽视了“安全是一个整体”，代码安全很多的其他因素有关系，比如上面我们谈到的PHP版本的问题，比较重要的还有操作系统类型（主要是两大阵营win/`*`nix），WEB服务端软件（主要是iis/apache两大类型）等因素。这是由于不同的系统不同的WEB SERVER有着不同的安全特点或特性，下文有些部分会涉及。
 
 所以我们在做某个公司WEB应用代码审计时，应该了解他们使用的系统，WEB服务端软件，PHP版本等信息。
 
-### 5 扩展我们的字典
+### 扩展我们的字典
 下面将详细介绍一些非传统PHP应用代码审计一些漏洞类型和利用技巧。
 
-#### 5.1 变量本身的key
+#### 变量本身的key
 ---------
 说到变量的提交很多人只是看到了GET/POST/COOKIE等提交的变量的值，但是忘记了有的程序把变量本身的key也当变量提取给函数处理。
 
@@ -57,15 +57,14 @@ key.php?<script>alert(1);</script>=1&bbb=2
 
 那么就导致一个xss的漏洞，扩展一下如果这个key提交给include()等函数或者sql查询呢？：） 
 
-|| *漏洞审计策略* ||
-|| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 ||
+| *漏洞审计策略* |
+| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 |
 
-=== 变量覆盖 ===
-
+#### 变量覆盖
+---------
 很多的漏洞查找者都知道extract()这个函数在指定参数为EXTR_OVERWRITE或者没有指定函数可以导致变量覆盖，但是还有很多其他情况导致变量覆盖的如：
 
-==== 遍历初始化变量 ====
-
+##### 遍历初始化变量
 请看如下代码：
 
 ``` php
@@ -91,10 +90,10 @@ if($_POST && $charset != 'utf-8') {
 	unset($chs);
 ```
 
-|| *漏洞审计策略* ||
-|| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 ||
+| *漏洞审计策略* |
+| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 |
 
-==== parse_str()变量覆盖漏洞 ====
+##### parse_str()变量覆盖漏洞
 
 ``` php
 //var.php?var=new
@@ -105,7 +104,7 @@ print $var;
  
 该函数一样可以覆盖数组变量，上面的代码是通过$`_`SERVER['QUERY_STRING']来提取变量的，对于指定了变量名的我们可以通过注射“=”来实现覆盖其他的变量：
 
-```
+``` php
 //var.php?var=1&a[1]=var1%3d222
 $var1 = 'init';
 parse_str($a[$_GET['var']]);
@@ -114,16 +113,16 @@ print $var1;
 
 上面的代码通过提交$var来实现对$var1的覆盖。
 
-|| *漏洞审计策略（parse_str）* ||
-|| PHP版本要求：无<br>系统要求：无<br>审计策略：查找字符parse_str ||
+| *漏洞审计策略（parse_str）* |
+| PHP版本要求：无<br>系统要求：无<br>审计策略：查找字符parse_str |
 
-|| *漏洞审计策略（mb_parse_str）* ||
-|| PHP版本要求：php4<4.4.7 php5<5.2.2<br>系统要求：无<br>审计策略：查找字符mb_parse_str ||
+| *漏洞审计策略（mb_parse_str）* |
+| PHP版本要求：php4<4.4.7 php5<5.2.2<br>系统要求：无<br>审计策略：查找字符mb_parse_str |
 
 
-==== import_request_variables()变量覆盖漏洞 ====
+##### import_request_variables()变量覆盖漏洞
 
-```
+``` php
 //var.php?_SERVER[REMOTE_ADDR]=10.1.1.1
 echo 'GLOBALS '.(int)ini_get("register_globals")."n";
 import_request_variables('GPC');
@@ -131,8 +130,8 @@ if ($_SERVER['REMOTE_ADDR'] != '10.1.1.1') die('Go away!');
 echo 'Hello admin!';
 ```
 
-|| *漏洞审计策略（import_request_variables）* ||
-|| PHP版本要求：php4<4.4.1 php5<5.2.2<br>系统要求：无<br>审计策略：查找字符import_request_variables ||
+| *漏洞审计策略（import_request_variables）* |
+| PHP版本要求：php4<4.4.1 php5<5.2.2<br>系统要求：无<br>审计策略：查找字符import_request_variables |
 
 ==== PHP5 Globals ====
 
@@ -158,8 +157,8 @@ print $_GET[b];
 
 如果熟悉WEB2.0的攻击的同学，很容易想到上面的代码我们可以利用这个特性进行crsf攻击。
 
-|| *漏洞审计策略* ||
-|| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 ||
+| *漏洞审计策略* |
+| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 |
 
 === magic_quotes_gpc与代码安全 ===
  
@@ -173,13 +172,13 @@ print $_GET[b];
 
 PHP5的$`_`SERVER变量缺少magic_quotes_gpc的保护，导致近年来X-Forwarded-For的漏洞猛暴，所以很多程序员考虑过滤X-Forwarded-For，但是其他的变量呢？
 
-|| *漏洞审计策略（$`_`SERVER变量）* ||
-|| PHP版本要求：无<br>系统要求：无<br>审计策略：查找字符`_`SERVER ||
+| *漏洞审计策略（$`_`SERVER变量）* |
+| PHP版本要求：无<br>系统要求：无<br>审计策略：查找字符`_`SERVER |
 
 *2) getenv()得到的变量（使用类似$`_`SERVER变量）*
 
-|| *漏洞审计策略（getenv()）* ||
-|| PHP版本要求：无<br>系统要求：无<br>审计策略：查找字符getenv ||
+| *漏洞审计策略（getenv()）* |
+| PHP版本要求：无<br>系统要求：无<br>审计策略：查找字符getenv |
 
 *3) $HTTP_RAW_POST_DATA与PHP输入、输出流*
 
@@ -193,8 +192,8 @@ if ( isset($HTTP_RAW_POST_DATA) )
 	$HTTP_RAW_POST_DATA = trim($HTTP_RAW_POST_DATA);
 ```
 	        
-|| *漏洞审计策略（数据流）* ||
-|| PHP版本要求：无<br>系统要求：无<br>审计策略：查找字符HTTP_RAW_POST_DATA或者php://input ||
+| *漏洞审计策略（数据流）* |
+| PHP版本要求：无<br>系统要求：无<br>审计策略：查找字符HTTP_RAW_POST_DATA或者php://input |
 
 *4) 数据库操作容易忘记'的地方如：in()/limit/order by/group by*
 
@@ -214,8 +213,8 @@ $query = $db->query("SELECT m.username, mf.ignorepm FROM {$tablepre}members m
 	WHERE m.uid IN ($uids)");
 ```
 
-|| *漏洞审计策略* ||
-|| PHP版本要求：无<br>系统要求：无<br>审计策略：查找数据库操作字符（select,update,insert等等） ||
+| *漏洞审计策略* |
+| PHP版本要求：无<br>系统要求：无<br>审计策略：查找数据库操作字符（select,update,insert等等） |
 
 
 ==== 变量的编码与解码 ====
@@ -228,13 +227,13 @@ $query = $db->query("SELECT m.username, mf.ignorepm FROM {$tablepre}members m
 
 *2) 其他字符串转换函数：*
 
-|| base64_decode || 对使用 MIME base64 编码的数据进行解码 ||
-|| base64_encode || 使用 MIME base64 对数据进行编码 ||
-|| rawurldecode || 对已编码的 URL 字符串进行解码 ||
-|| rawurlencode || 按照 RFC 1738 对 URL 进行编码 ||
-|| urldecode || 解码已编码的 URL 字符串 ||
-|| urlencode || 编码 URL 字符串 ||
-|| ... || ... ||
+| base64_decode | 对使用 MIME base64 编码的数据进行解码 |
+| base64_encode | 使用 MIME base64 对数据进行编码 |
+| rawurldecode | 对已编码的 URL 字符串进行解码 |
+| rawurlencode | 按照 RFC 1738 对 URL 进行编码 |
+| urldecode | 解码已编码的 URL 字符串 |
+| urlencode | 编码 URL 字符串 |
+| ... | ... |
 
 _另外一个 unserialize/serialize_
 
@@ -252,8 +251,8 @@ $sql = "SELECT * FROM article WHERE articleid='".urldecode($_GET[id])."'";
 SELECT * FROM article WHERE articleid='''
 ```
 
-|| *漏洞审计策略* ||
-|| PHP版本要求：无<br>系统要求：无<br>审计策略：查找对应的编码函数 ||
+| *漏洞审计策略* |
+| PHP版本要求：无<br>系统要求：无<br>审计策略：查找对应的编码函数 |
 
 ==== 二次攻击 ====
 
@@ -268,8 +267,8 @@ _详细见附录`[`1`]`_
     
 从这里我们可以思考得到一个结论：一切进入函数的变量都是有害的，另外利用二次攻击我们可以实现一个webrootkit，把我们的恶意构造直接放到数据库里。我们应当把这样的代码看成一个vul？
 
-|| *漏洞审计策略* ||
-|| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 ||
+| *漏洞审计策略* |
+| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 |
 
 ==== 魔术引号带来的新的安全问题 ====
 
@@ -325,8 +324,8 @@ shipping_id, invoice_no, user_id FROM order_info WHERE order_sn = '\' and
 order_tn=' and 1=1/*'
 ```
 
-|| *漏洞审计策略* ||
-|| PHP版本要求：无<br>系统要求：无<br>审计策略：查找字符串处理函数如substr或者通读代码 ||
+| *漏洞审计策略* |
+| PHP版本要求：无<br>系统要求：无<br>审计策略：查找字符串处理函数如substr或者通读代码 |
 
 ==== 变量key与魔术引号 ====
 
@@ -367,8 +366,8 @@ Array ( [aaaa'aaa] => Array ( [bb\'] => 1 ) )
 
 数组第一维变量的key不受魔术引号的影响。
 
-|| *漏洞审计策略* ||
-|| PHP版本要求：php4和php<5.2.1<br>系统要求：无<br>审计策略：通读代码 ||
+| *漏洞审计策略* |
+| PHP版本要求：php4和php<5.2.1<br>系统要求：无<br>审计策略：通读代码 |
 
 
 *2)当magic_quotes_gpc = Off时，在php5.24下测试显示：*
@@ -411,8 +410,8 @@ Array
 aaa'aa
 ```
 
-|| *漏洞审计策略* ||
-|| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 ||
+| *漏洞审计策略* |
+| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 |
 
 === 代码注射 ===
 
@@ -420,12 +419,12 @@ aaa'aa
 
 很多人都知道eval、preg_replace+/e可以执行代码，但是不知道php还有很多的函数可以执行代码如：
 
-|| assert() ||
-|| call_user_func() ||
-|| call_user_func_array() ||
-|| create_function() ||
-|| 变量函数 ||
-|| ... ||
+| assert() |
+| call_user_func() |
+| call_user_func_array() |
+| create_function() |
+| 变量函数 |
+| ... |
 
 这里我们看看最近出现的几个关于create_function()代码执行漏洞的代码：
 
@@ -440,8 +439,8 @@ $sort_function = '  return 1 * ' . $sorter . '($a["' . $sort_by . '"], $b["' . $
 usort($databases, create_function('$a, $b', $sort_function));
 ```
 
-|| *漏洞审计策略* ||
-|| PHP版本要求：无<br>系统要求：无<br>审计策略：查找对应函数（assert,call_user_func,call_user_func_array,create_function等） ||
+| *漏洞审计策略* |
+| PHP版本要求：无<br>系统要求：无<br>审计策略：查找对应函数（assert,call_user_func,call_user_func_array,create_function等） |
 
 ==== 变量函数与双引号 ====
      
@@ -467,8 +466,8 @@ $text = preg_replace(
 						
 另外很多的应用程序都把变量用""存放在缓存文件或者config或者data文件里，这样很容易被人注射变量函数。
    
-|| *漏洞审计策略* ||
-|| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 ||
+| *漏洞审计策略* |
+| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 |
 
 === PHP自身函数漏洞及缺陷 ===
      
@@ -482,8 +481,8 @@ unserialize(stripslashes($HTTP_COOKIE_VARS[$cookiename . '_data']);
 
 在以往的PHP版本里，很多函数都曾经出现过溢出漏洞，所以我们在审计应用程序漏洞的时候不要忘记了测试目标使用的PHP版本信息。
 
-|| *漏洞审计策略* ||
-|| PHP版本要求：对应fix的版本<br>系统要求：<br>审计策略：查找对应函数名 ||
+| *漏洞审计策略* |
+| PHP版本要求：对应fix的版本<br>系统要求：<br>审计策略：查找对应函数名 |
 
 ==== PHP函数的其他漏洞 ====
 
@@ -503,8 +502,8 @@ $uids ? $uids=substr($uids,0,-1) : $sqlwhere.=' AND 0 ';
 $query = $db->query("SELECT DISTINCT t.tid FROM $sqltable WHERE $sqlwhere $orderby $limit");
 ```
     
-|| *漏洞审计策略* ||
-|| PHP版本要求：php4<4.3 php5<5.14<br>系统要求：无<br>审计策略：查找unset ||
+| *漏洞审计策略* |
+| PHP版本要求：php4<4.3 php5<5.14<br>系统要求：无<br>审计策略：查找unset |
 
 ==== session_destroy()删除文件漏洞 ====
 
@@ -530,8 +529,8 @@ if($_GET['del']) {
 
 当我们提交构造cookie:PHPSESSID=/../1.php，相当于unlink('sess`_`/../1.php')这样就通过注射../转跳目录删除任意文件了。很多著名的程序某些版本都受影响如phpmyadmin，sablog，phpwind3等等。
 
-|| *漏洞审计策略* ||
-|| PHP版本要求：具体不详<br>系统要求：无<br>审计策略：查找session_destroy ||
+| *漏洞审计策略* |
+| PHP版本要求：具体不详<br>系统要求：无<br>审计策略：查找session_destroy |
 
 ==== 随机函数 ====
    
@@ -560,8 +559,8 @@ for($i=0;$i<=32767;$i++){
 
 当我们的程序使用rand处理session时，攻击者很容易暴力破解出你的session，但是对于mt_rand是很难单纯的暴力的。
 
-|| *漏洞审计策略* ||
-|| PHP版本要求：无<br>系统要求：无<br>审计策略：查找rand ||
+| *漏洞审计策略* |
+| PHP版本要求：无<br>系统要求：无<br>审计策略：查找rand |
 
 *2) mt_srand()/srand()-weak seeding（by Stefan Esser）*
 
@@ -638,11 +637,11 @@ return false;
 
 从上面的代码实现了对seed的破解，另外根据Stefan Esser的分析seed还根据进程变化而变化，换句话来说同一个进程里的seed是相同的。 然后同一个seed每次mt_rand的值都是特定的。如下图：
 
-|| *seed-A* ||
-|| mt_rand-A-1<br>mt_rand-A-2<br>mt_rand-A-3 ||
+| *seed-A* |
+| mt_rand-A-1<br>mt_rand-A-2<br>mt_rand-A-3 |
 
-|| *seed-B* ||
-|| mt_rand-B-1<br>mt_rand-B-2<br>mt_rand-B-3 ||
+| *seed-B* |
+| mt_rand-B-1<br>mt_rand-B-2<br>mt_rand-B-3 |
 
 对于seed-A里mt_rand-1/2/3都是不相等的，但是值都是特定的，也就是说当seed-A等于seed-B，那么mt_rand-A-1就等于mt_rand-B-1…，这样我们只要能够得到seed就可以得到每次mt_rand的值了。
 
@@ -751,8 +750,8 @@ echo mt_rand();
 
 很多著名的程序都产生了类似的漏洞如wordpress、phpbb、punbb等等。（在后面我们将实际分析下国内著名的bbs程序Discuz!的mt_srand导致的漏洞）
 
-|| *漏洞审计策略* ||
-|| PHP版本要求：php4 php5<5.2.6<br>系统要求：无<br>审计策略：查找mt_srand/mt_rand ||
+| *漏洞审计策略* |
+| PHP版本要求：php4 php5<5.2.6<br>系统要求：无<br>审计策略：查找mt_srand/mt_rand |
 
 
 === 特殊字符 ===
@@ -851,8 +850,8 @@ if(@mysql_fetch_array($result, MYSQL_NUM)) {
 }
 ```
 
-|| *漏洞审计策略* ||
-|| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 ||
+| *漏洞审计策略* |
+| PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 |
 
 ===== 文件操作里的特殊字符 =====
     
@@ -893,8 +892,8 @@ for($i=0;$i<255;$i++) {
 
 我们在windows系统运行上面的代码得到如下字符`*` < > ? P p都可以打开目录下的1.php。
 
-|| *漏洞审计策略* ||
-|| PHP版本要求：无<br>系统要求：无<br>审计策略：文读取件操作函数 ||
+| *漏洞审计策略* |
+| PHP版本要求：无<br>系统要求：无<br>审计策略：文读取件操作函数 |
 
 
 == 怎么进一步寻找新的字典 ==
@@ -911,8 +910,8 @@ for($i=0;$i<255;$i++) {
 
 == DEMO ==
 
-|| *DEMO -- Discuz! Reset User Password 0day Vulnerability 分析<br>（Exp:[http://www.80vul.com/dzvul/sodb/14/sodb-2008-14.txt]）* ||
-|| PHP版本要求:php4 php5<5.2.6<br>系统要求: 无<br>审计策略:查找mt_srand/mt_rand ||
+| *DEMO -- Discuz! Reset User Password 0day Vulnerability 分析<br>（Exp:[http://www.80vul.com/dzvul/sodb/14/sodb-2008-14.txt]）* |
+| PHP版本要求:php4 php5<5.2.6<br>系统要求: 无<br>审计策略:查找mt_srand/mt_rand |
 
 第一步 安装Discuz! 6.1后利用grep查找mt_srand得到：
 
@@ -931,7 +930,7 @@ heige@heige-desktop:~/dz6/upload$ grep -in 'mt_srand' -r ./ --colour -5
 ./include/global.func.php-704-          $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz';
 --
 ./include/discuzcode.func.php-30-
-./include/discuzcode.func.php-31-if(!isset($_DCACHE['bbcodes']) || !is_array($_DCACHE['bbcodes']) || !is_array($_DCACHE['smilies'])) {
+./include/discuzcode.func.php-31-if(!isset($_DCACHE['bbcodes']) | !is_array($_DCACHE['bbcodes']) | !is_array($_DCACHE['smilies'])) {
 ./include/discuzcode.func.php-32-       @include DISCUZ_ROOT.'./forumdata/cache/cache_bbcodes.php';
 ./include/discuzcode.func.php-33-}
 ./include/discuzcode.func.php-34-
