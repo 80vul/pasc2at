@@ -288,7 +288,7 @@ SELECT * FROM article WHERE articleid='''
 
 ### 二次攻击
 
-_详细见附录`[`1`]`_
+_详细见附录 [1]_
 
 *1) 数据库出来的变量没有进行过滤*
 
@@ -523,7 +523,7 @@ $text = preg_replace(
 ---------
 ### PHP函数的溢出漏洞
 
-大家还记得Stefan Esser大牛的Month of PHP Bugs（MOPB见附录[2]）项目么，其中比较有名的要算是unserialize()，代码如下：
+大家还记得Stefan Esser大牛的Month of PHP Bugs（MOPB见附录 [2]）项目么，其中比较有名的要算是unserialize()，代码如下：
 
 ``` php
 unserialize(stripslashes($HTTP_COOKIE_VARS[$cookiename . '_data']);
@@ -725,7 +725,7 @@ return false;
 The Implementation
 > When mt_rand() is seeded internally or by a call to mt_srand() PHP 4 and PHP 5 <= 5.2.0 force the lowest bit to 1. Therefore the strength of the seed is only 31 and not 32 bits. In PHP 5.2.1 and above the implementation of the Mersenne Twister was changed and the forced bit removed.
 
-在32位系统上默认的播种的种子为最大值是`2^32`，这样我们循环最多`2^32`次就可以破解seed。而在PHP 4和PHP 5 <= 5.2.0 的算法有个bug：奇数和偶数的播种是一样的（详见附录[3]）,测试代码如下：
+在32位系统上默认的播种的种子为最大值是`2^32`，这样我们循环最多`2^32`次就可以破解seed。而在PHP 4和PHP 5 <= 5.2.0 的算法有个bug：奇数和偶数的播种是一样的（详见附录 [3] ）,测试代码如下：
 
 ``` php
 <?php
@@ -1049,8 +1049,11 @@ heige@heige-desktop:~/dz6/upload$ grep -in 'mt_srand' -r ./ --colour -5
 
 ### 后话
 
-本文是80vul的三大马甲：80vul-A，80vul-B，80vul-C集体智慧的结晶，尤其是80vul-B贡献了不少新发现。另外需要感谢的是文章里提到的那些漏洞的发现者，没有他们的成果也就没有本文。本文没有写“参考”，因为本文是一个总结性的文挡，有太多的连接需要提供限于篇幅就没有一一列举，有心的读者可以自行google。另外原本没有打算公布此文，因为里面包含了太多应用程序的0day，而且有太多的不尊重别人成果的人，老是利用从别人那学到的技术来炫耀，甚至牟取利益。在这里我们希望你可以在本文里学到些东西，更加希望如果通过本文你找到了某些应用程序的0day，请低调处理，或者直接提交给官方修补，谢谢大家！！
+本文是80vul的三大马甲：80vul-A，80vul-B，80vul-C集体智慧的结晶，尤其是80vul-B贡献了不少新发现。
 
+另外需要感谢的是文章里提到的那些漏洞的发现者，没有他们的成果也就没有本文。
+
+本文没有写“参考”，因为本文是一个总结性的文挡，有太多的连接需要提供限于篇幅就没有一一列举，有心的读者可以自行google。另外原本没有打算公布此文，因为里面包含了太多应用程序的0day，而且有太多的不尊重别人成果的人，老是利用从别人那学到的技术来炫耀，甚至牟取利益。在这里我们希望你可以在本文里学到些东西，更加希望如果通过本文你找到了某些应用程序的0day，请低调处理，或者直接提交给官方修补，谢谢大家！！
 
 ### 附录
 
